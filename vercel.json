@@ -19,11 +19,51 @@
       "dest": "/server/index.js"
     },
     {
-      "src": "/(.*)",
+      "src": "/manifest.webmanifest",
+      "dest": "/dist/manifest.webmanifest"
+    },
+    {
+      "src": "/sw.js",
+      "dest": "/dist/sw.js"
+    },
+    {
+      "src": "/workbox-.*\\.js",
+      "dest": "/dist/workbox-$1.js"
+    },
+    {
+      "src": "/(.*\\.(png|jpg|jpeg|svg|ico|css|js|json))",
       "dest": "/dist/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/dist/index.html"
     }
   ],
   "env": {
     "NODE_ENV": "production"
-  }
+  },
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        },
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        }
+      ]
+    }
+  ]
 }
