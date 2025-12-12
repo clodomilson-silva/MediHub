@@ -13,35 +13,12 @@
       "use": "@vercel/node"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/server/index.js"
-    },
-    {
-      "src": "/manifest.webmanifest",
-      "dest": "/dist/manifest.webmanifest"
-    },
-    {
-      "src": "/sw.js",
-      "dest": "/dist/sw.js"
-    },
-    {
-      "src": "/workbox-.*\\.js",
-      "dest": "/dist/workbox-$1.js"
-    },
-    {
-      "src": "/(.*\\.(png|jpg|jpeg|svg|ico|css|js|json))",
-      "dest": "/dist/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/dist/index.html"
+      "source": "/api/:path*",
+      "destination": "/server/index.js"
     }
   ],
-  "env": {
-    "NODE_ENV": "production"
-  },
   "headers": [
     {
       "source": "/sw.js",
@@ -65,5 +42,8 @@
         }
       ]
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
