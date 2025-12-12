@@ -21,6 +21,21 @@ export default function ListaPacientes() {
   return (
     <DashboardLayout>
       <div>
+        <Link
+          to="/dashboard"
+          style={{
+            color: '#009688',
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginBottom: '16px',
+            fontSize: '14px'
+          }}
+        >
+          ← Voltar para Dashboard
+        </Link>
+        
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',

@@ -117,6 +117,21 @@ export default function ListaExames() {
   return (
     <DashboardLayout>
       <div style={{ padding: '32px' }}>
+        <Link
+          to="/dashboard"
+          style={{
+            color: '#009688',
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginBottom: '16px',
+            fontSize: '14px'
+          }}
+        >
+          ← Voltar para Dashboard
+        </Link>
+        
         {/* Cabeçalho */}
         <div style={{ 
           display: 'flex', 

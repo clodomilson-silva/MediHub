@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 
 export default function CadastrarPaciente() {
@@ -90,6 +90,21 @@ export default function CadastrarPaciente() {
     return (
       <DashboardLayout>
         <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+          <Link
+            to="/pacientes"
+            style={{
+              color: '#009688',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '16px',
+              fontSize: '14px'
+            }}
+          >
+            ← Voltar para Pacientes
+          </Link>
+          
           <h2 style={{
             fontSize: '28px',
             fontWeight: 'bold',
@@ -162,6 +177,21 @@ export default function CadastrarPaciente() {
     return (
       <DashboardLayout>
         <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+          <Link
+            to="/pacientes"
+            style={{
+              color: '#009688',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '16px',
+              fontSize: '14px'
+            }}
+          >
+            ← Voltar para Pacientes
+          </Link>
+          
           <h2 style={{
             fontSize: '28px',
             fontWeight: 'bold',
@@ -252,6 +282,21 @@ export default function CadastrarPaciente() {
   return (
     <DashboardLayout>
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+        <Link
+          to="/pacientes"
+          style={{
+            color: '#009688',
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginBottom: '16px',
+            fontSize: '14px'
+          }}
+        >
+          ← Voltar para Pacientes
+        </Link>
+        
         <h2 style={{
           fontSize: '28px',
           fontWeight: 'bold',

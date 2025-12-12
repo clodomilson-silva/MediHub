@@ -1,40 +1,41 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { api } from "../services/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
+  const [carregando, setCarregando] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErro("");
+    setCarregando(true);
     
-    // Simulação de banco de dados - posteriormente conectar com API real
-    const usuarios = [
-      { id: 1, email: "admin@medihub.com", senha: "admin123", tipo: "admin", nome: "Administrador" },
-      { id: 2, email: "medico@medihub.com", senha: "medico123", tipo: "medico", nome: "Dr. João Silva", crm: "12345-SP" },
-      { id: 3, email: "paciente@medihub.com", senha: "paciente123", tipo: "paciente", nome: "Maria Santos", cpf: "123.456.789-00" },
-    ];
+    try {
+      const response = await api.post('/auth/login', {
+        email,
+        senha
+      });
 
-    const usuario = usuarios.find(u => u.email === email && u.senha === senha);
+      const { usuario, token } = response.data;
 
-    if (usuario) {
-      const userSemSenha = {
-        id: usuario.id,
-        email: usuario.email,
-        tipo: usuario.tipo,
-        nome: usuario.nome,
-        ...(usuario.crm && { crm: usuario.crm }),
-        ...(usuario.cpf && { cpf: usuario.cpf })
-      };
-      login(userSemSenha);
+      // Salvar token no localStorage
+      localStorage.setItem('token', token);
+
+      // Fazer login no contexto com os dados do usuário
+      login(usuario);
+      
       navigate("/dashboard");
-    } else {
-      setErro("Email ou senha incorretos");
+    } catch (error) {
+      console.error('Erro no login:', error);
+      setErro(error.response?.data?.error || "Erro ao fazer login. Tente novamente.");
+    } finally {
+      setCarregando(false);
     }
   };
 
@@ -130,20 +131,21 @@ export default function Login() {
 
           <button
             type="submit"
+            disabled={carregando}
             style={{
               width: '100%',
-              backgroundColor: '#009688',
+              backgroundColor: carregando ? '#ccc' : '#009688',
               color: 'white',
               padding: '14px',
               borderRadius: '4px',
               border: 'none',
               fontSize: '16px',
               fontWeight: '600',
-              cursor: 'pointer',
+              cursor: carregando ? 'not-allowed' : 'pointer',
               marginBottom: '16px'
             }}
           >
-            Entrar
+            {carregando ? 'Entrando...' : 'Entrar'}
           </button>
 
           <div style={{ textAlign: 'center' }}>

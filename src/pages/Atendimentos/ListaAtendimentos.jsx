@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import DashboardLayout from '../../layouts/DashboardLayout';
 
 export default function ListaAtendimentos() {
   const { user } = useAuth();
@@ -103,22 +105,38 @@ export default function ListaAtendimentos() {
   });
 
   return (
-    <div style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: '32px'
-      }}>
-        <div>
-          <h1 style={{ fontSize: '32px', fontWeight: 'bold', color: '#006F6A', marginBottom: '8px' }}>
-            🩺 Atendimentos
-          </h1>
-          <p style={{ color: '#5A5A5A' }}>
-            Gerencie consultas e atendimentos médicos
-          </p>
-        </div>
+    <DashboardLayout>
+      <div style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto' }}>
+        <Link
+          to="/dashboard"
+          style={{
+            color: '#009688',
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginBottom: '16px',
+            fontSize: '14px'
+          }}
+        >
+          ← Voltar para Dashboard
+        </Link>
+        
+        {/* Header */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: '32px'
+        }}>
+          <div>
+            <h1 style={{ fontSize: '32px', fontWeight: 'bold', color: '#006F6A', marginBottom: '8px' }}>
+              🩺 Atendimentos
+            </h1>
+            <p style={{ color: '#5A5A5A' }}>
+              Gerencie consultas e atendimentos médicos
+            </p>
+          </div>
         
         {user?.tipo !== 'paciente' && (
           <button
@@ -581,6 +599,7 @@ export default function ListaAtendimentos() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

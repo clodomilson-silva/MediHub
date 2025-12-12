@@ -1,7 +1,7 @@
 import express from 'express';
 import { db } from '../db/index.js';
-import { pacientes, pacienteUnidade, vacinas } from '../db/schema.js';
-import { eq } from 'drizzle-orm';
+import { pacientes, pacienteUnidade, vacinas, atendimentos, receitas, exames, unidades, usuarios } from '../db/schema.js';
+import { eq, desc, and, sql } from 'drizzle-orm';
 import { authMiddleware, checkRole } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -179,6 +179,306 @@ router.post('/:id/vincular-unidade', checkRole('admin', 'medico'), async (req, r
   } catch (error) {
     console.error('Erro ao vincular paciente:', error);
     res.status(500).json({ error: 'Erro ao vincular paciente' });
+  }
+});
+
+// ==================== ROTAS PARA PACIENTES ====================
+
+// Buscar prontuário do paciente logado
+router.get('/meu/prontuario', checkRole('paciente'), async (req, res) => {
+  try {
+    const usuarioId = req.user.id;
+    
+    // Buscar paciente pelo usuarioId
+    const paciente = await db.select().from(pacientes).where(eq(pacientes.usuarioId, usuarioId));
+    
+    if (paciente.length === 0) {
+      return res.status(404).json({ error: 'Paciente não encontrado' });
+    }
+
+    const pacienteId = paciente[0].id;
+
+    // Buscar vacinas
+    const vacinasPaciente = await db.select().from(vacinas).where(eq(vacinas.pacienteId, pacienteId));
+
+    // Buscar unidades vinculadas
+    const unidadesVinculadas = await db
+      .select({
+        id: unidades.id,
+        nome: unidades.nome,
+        endereco: unidades.endereco,
+        cidade: unidades.cidade,
+        telefone: unidades.telefone,
+      })
+      .from(pacienteUnidade)
+      .innerJoin(unidades, eq(pacienteUnidade.unidadeId, unidades.id))
+      .where(and(eq(pacienteUnidade.pacienteId, pacienteId), eq(pacienteUnidade.ativo, true)));
+
+    // Buscar próxima consulta agendada
+    const proximaConsulta = await db
+      .select({
+        id: atendimentos.id,
+        dataAtendimento: atendimentos.dataAtendimento,
+        tipo: atendimentos.tipo,
+        medicoNome: usuarios.nome,
+        medicoEspecialidade: usuarios.crm,
+        unidadeNome: unidades.nome,
+      })
+      .from(atendimentos)
+      .innerJoin(usuarios, eq(atendimentos.medicoId, usuarios.id))
+      .innerJoin(unidades, eq(atendimentos.unidadeId, unidades.id))
+      .where(and(
+        eq(atendimentos.pacienteId, pacienteId),
+        eq(atendimentos.status, 'agendado'),
+        sql`${atendimentos.dataAtendimento} > NOW()`
+      ))
+      .orderBy(atendimentos.dataAtendimento)
+      .limit(1);
+
+    // Buscar estatísticas
+    const totalConsultas = await db
+      .select({ count: sql`COUNT(*)` })
+      .from(atendimentos)
+      .where(eq(atendimentos.pacienteId, pacienteId));
+
+    const totalExames = await db
+      .select({ count: sql`COUNT(*)` })
+      .from(exames)
+      .where(eq(exames.pacienteId, pacienteId));
+
+    const totalReceitas = await db
+      .select({ count: sql`COUNT(*)` })
+      .from(receitas)
+      .where(eq(receitas.pacienteId, pacienteId));
+
+    res.json({
+      ...paciente[0],
+      vacinas: vacinasPaciente,
+      unidadesVinculadas: unidadesVinculadas,
+      proximaConsulta: proximaConsulta.length > 0 ? proximaConsulta[0] : null,
+      estatisticas: {
+        totalConsultas: parseInt(totalConsultas[0].count),
+        totalExames: parseInt(totalExames[0].count),
+        totalReceitas: parseInt(totalReceitas[0].count),
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao buscar prontuário:', error);
+    res.status(500).json({ error: 'Erro ao buscar prontuário' });
+  }
+});
+
+// Buscar consultas do paciente logado
+router.get('/meu/consultas', checkRole('paciente'), async (req, res) => {
+  try {
+    const usuarioId = req.user.id;
+    
+    // Buscar paciente pelo usuarioId
+    const paciente = await db.select().from(pacientes).where(eq(pacientes.usuarioId, usuarioId));
+    
+    if (paciente.length === 0) {
+      return res.status(404).json({ error: 'Paciente não encontrado' });
+    }
+
+    const pacienteId = paciente[0].id;
+
+    // Buscar todas as consultas
+    const consultas = await db
+      .select({
+        id: atendimentos.id,
+        dataAtendimento: atendimentos.dataAtendimento,
+        tipo: atendimentos.tipo,
+        status: atendimentos.status,
+        queixaPrincipal: atendimentos.queixaPrincipal,
+        hipoteseDiagnostica: atendimentos.hipoteseDiagnostica,
+        conduta: atendimentos.conduta,
+        observacoes: atendimentos.observacoes,
+        medicoNome: usuarios.nome,
+        medicoEspecialidade: usuarios.crm,
+        unidadeNome: unidades.nome,
+      })
+      .from(atendimentos)
+      .innerJoin(usuarios, eq(atendimentos.medicoId, usuarios.id))
+      .innerJoin(unidades, eq(atendimentos.unidadeId, unidades.id))
+      .where(eq(atendimentos.pacienteId, pacienteId))
+      .orderBy(desc(atendimentos.dataAtendimento));
+
+    res.json(consultas);
+  } catch (error) {
+    console.error('Erro ao buscar consultas:', error);
+    res.status(500).json({ error: 'Erro ao buscar consultas' });
+  }
+});
+
+// Buscar receitas do paciente logado
+router.get('/meu/receitas', checkRole('paciente'), async (req, res) => {
+  try {
+    const usuarioId = req.user.id;
+    
+    // Buscar paciente pelo usuarioId
+    const paciente = await db.select().from(pacientes).where(eq(pacientes.usuarioId, usuarioId));
+    
+    if (paciente.length === 0) {
+      return res.status(404).json({ error: 'Paciente não encontrado' });
+    }
+
+    const pacienteId = paciente[0].id;
+
+    // Buscar todas as receitas
+    const todasReceitas = await db
+      .select({
+        id: receitas.id,
+        medicamentos: receitas.medicamentos,
+        observacoes: receitas.observacoes,
+        dataValidade: receitas.dataValidade,
+        criadoEm: receitas.criadoEm,
+        medicoNome: usuarios.nome,
+        medicoCrm: usuarios.crm,
+        atendimentoId: atendimentos.id,
+        queixaPrincipal: atendimentos.queixaPrincipal,
+        hipoteseDiagnostica: atendimentos.hipoteseDiagnostica,
+        unidadeNome: unidades.nome,
+      })
+      .from(receitas)
+      .innerJoin(usuarios, eq(receitas.medicoId, usuarios.id))
+      .innerJoin(atendimentos, eq(receitas.atendimentoId, atendimentos.id))
+      .innerJoin(unidades, eq(atendimentos.unidadeId, unidades.id))
+      .where(eq(receitas.pacienteId, pacienteId))
+      .orderBy(desc(receitas.criadoEm));
+
+    res.json(todasReceitas);
+  } catch (error) {
+    console.error('Erro ao buscar receitas:', error);
+    res.status(500).json({ error: 'Erro ao buscar receitas' });
+  }
+});
+
+// Buscar exames do paciente logado
+router.get('/meu/exames', checkRole('paciente'), async (req, res) => {
+  try {
+    const usuarioId = req.user.id;
+    
+    // Buscar paciente pelo usuarioId
+    const paciente = await db.select().from(pacientes).where(eq(pacientes.usuarioId, usuarioId));
+    
+    if (paciente.length === 0) {
+      return res.status(404).json({ error: 'Paciente não encontrado' });
+    }
+
+    const pacienteId = paciente[0].id;
+
+    // Buscar todos os exames
+    const todosExames = await db
+      .select({
+        id: exames.id,
+        tipoExame: exames.tipoExame,
+        descricao: exames.descricao,
+        dataSolicitacao: exames.dataSolicitacao,
+        dataRealizacao: exames.dataRealizacao,
+        resultado: exames.resultado,
+        anexo: exames.anexo,
+        status: exames.status,
+        medicoNome: usuarios.nome,
+        medicoCrm: usuarios.crm,
+        unidadeNome: unidades.nome,
+      })
+      .from(exames)
+      .innerJoin(usuarios, eq(exames.medicoSolicitante, usuarios.id))
+      .leftJoin(atendimentos, eq(exames.atendimentoId, atendimentos.id))
+      .leftJoin(unidades, eq(atendimentos.unidadeId, unidades.id))
+      .where(eq(exames.pacienteId, pacienteId))
+      .orderBy(desc(exames.dataSolicitacao));
+
+    res.json(todosExames);
+  } catch (error) {
+    console.error('Erro ao buscar exames:', error);
+    res.status(500).json({ error: 'Erro ao buscar exames' });
+  }
+});
+
+// Estatísticas gerais do dashboard (admin/médico)
+router.get('/dashboard/estatisticas', checkRole('admin', 'medico'), async (req, res) => {
+  try {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const amanha = new Date(hoje);
+    amanha.setDate(amanha.getDate() + 1);
+
+    // Total de pacientes ativos
+    const totalPacientesResult = await db
+      .select({ count: sql`count(*)` })
+      .from(pacientes)
+      .where(eq(pacientes.ativo, true));
+    
+    const totalPacientes = Number(totalPacientesResult[0].count);
+
+    // Consultas hoje
+    const consultasHojeResult = await db
+      .select({ count: sql`count(*)` })
+      .from(atendimentos)
+      .where(
+        and(
+          sql`${atendimentos.dataAtendimento} >= ${hoje.toISOString()}`,
+          sql`${atendimentos.dataAtendimento} < ${amanha.toISOString()}`
+        )
+      );
+    
+    const consultasHoje = Number(consultasHojeResult[0].count);
+
+    // Exames pendentes (solicitado)
+    const examesPendentesResult = await db
+      .select({ count: sql`count(*)` })
+      .from(exames)
+      .where(eq(exames.status, 'solicitado'));
+    
+    const examesPendentes = Number(examesPendentesResult[0].count);
+
+    // Total de atendimentos realizados
+    const procedimentosResult = await db
+      .select({ count: sql`count(*)` })
+      .from(atendimentos)
+      .where(eq(atendimentos.status, 'concluido'));
+    
+    const procedimentos = Number(procedimentosResult[0].count);
+
+    res.json({
+      totalPacientes,
+      consultasHoje,
+      examesPendentes,
+      procedimentos
+    });
+  } catch (error) {
+    console.error('Erro ao buscar estatísticas:', error);
+    res.status(500).json({ error: 'Erro ao buscar estatísticas' });
+  }
+});
+
+// Atendimentos recentes (admin/médico)
+router.get('/dashboard/atendimentos-recentes', checkRole('admin', 'medico'), async (req, res) => {
+  try {
+    const limite = parseInt(req.query.limite) || 5;
+
+    const atendimentosRecentes = await db
+      .select({
+        id: atendimentos.id,
+        dataAtendimento: atendimentos.dataAtendimento,
+        tipo: atendimentos.tipo,
+        status: atendimentos.status,
+        pacienteNome: pacientes.nome,
+        medicoNome: usuarios.nome,
+        unidadeNome: unidades.nome
+      })
+      .from(atendimentos)
+      .innerJoin(pacientes, eq(atendimentos.pacienteId, pacientes.id))
+      .innerJoin(usuarios, eq(atendimentos.medicoId, usuarios.id))
+      .innerJoin(unidades, eq(atendimentos.unidadeId, unidades.id))
+      .orderBy(desc(atendimentos.dataAtendimento))
+      .limit(limite);
+
+    res.json(atendimentosRecentes);
+  } catch (error) {
+    console.error('Erro ao buscar atendimentos recentes:', error);
+    res.status(500).json({ error: 'Erro ao buscar atendimentos recentes' });
   }
 });
 
