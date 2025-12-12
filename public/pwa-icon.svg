@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#3B82F6"/>
+  <g transform="translate(128, 128)">
+    <!-- Medical cross icon -->
+    <rect x="108" y="32" width="40" height="192" fill="white" rx="8"/>
+    <rect x="32" y="108" width="192" height="40" fill="white" rx="8"/>
+    <!-- Plus sign in circle -->
+    <circle cx="128" cy="128" r="110" stroke="white" stroke-width="8" fill="none"/>
+  </g>
+  <text x="256" y="420" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="white" text-anchor="middle">MH</text>
+</svg>

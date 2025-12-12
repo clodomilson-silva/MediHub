@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gerar Ícones PWA</title>
+</head>
+<body>
+    <h2>Gerando ícones PNG do SVG...</h2>
+    <canvas id="canvas192" width="192" height="192" style="border:1px solid #000; margin: 10px;"></canvas>
+    <canvas id="canvas512" width="512" height="512" style="border:1px solid #000; margin: 10px;"></canvas>
+    
+    <script>
+        const svgCode = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#3B82F6"/>
+  <g transform="translate(128, 128)">
+    <rect x="108" y="32" width="40" height="192" fill="white" rx="8"/>
+    <rect x="32" y="108" width="192" height="40" fill="white" rx="8"/>
+    <circle cx="128" cy="128" r="110" stroke="white" stroke-width="8" fill="none"/>
+  </g>
+  <text x="256" y="420" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="white" text-anchor="middle">MH</text>
+</svg>`;
+
+        function generateIcon(size) {
+            const canvas = document.getElementById(`canvas${size}`);
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0, size, size);
+                
+                canvas.toBlob(function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `icon-${size}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 'image/png');
+            };
+            
+            const blob = new Blob([svgCode], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            img.src = url;
+        }
+
+        // Gerar ambos os ícones
+        setTimeout(() => generateIcon(192), 100);
+        setTimeout(() => generateIcon(512), 500);
+    </script>
+    
+    <div style="margin-top: 20px; padding: 20px; background: #f0f0f0;">
+        <h3>Instruções:</h3>
+        <ol>
+            <li>Os arquivos <code>icon-192.png</code> e <code>icon-512.png</code> serão baixados automaticamente</li>
+            <li>Mova-os para a pasta <code>public/</code> do projeto</li>
+            <li>Reinicie o servidor de desenvolvimento</li>
+        </ol>
+    </div>
+</body>
+</html>
