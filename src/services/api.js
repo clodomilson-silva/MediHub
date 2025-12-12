@@ -1,7 +1,12 @@
 import axios from "axios";
 
+// Detecta automaticamente se está em produção ou desenvolvimento
+const baseURL = import.meta.env.PROD 
+  ? "/api"  // Em produção, usa o caminho relativo
+  : "http://localhost:3001/api";  // Em desenvolvimento, usa localhost
+
 export const api = axios.create({
-  baseURL: "http://localhost:3001/api",
+  baseURL,
 });
 
 // Interceptor para adicionar token em todas as requisições
